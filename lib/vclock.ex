@@ -1,4 +1,16 @@
 defmodule Crdtex.Vclock do
+  @moduledoc """
+  A simple Erlang implementation of vector clocks as inspired by Lamport logical clocks.
+  
+  references : 
+  - Leslie Lamport (1978). *Time, clocks, and the ordering of events
+    in a distributed system*. Communications of the ACM 21 (7): 558-565.
+    [link](http://research.microsoft.com/en-us/um/people/lamport/pubs/time-clocks.pdf)
+  - Friedemann Mattern (1988). *Virtual Time and Global States of
+    Distributed Systems*. Workshop on Parallel and Distributed Algorithms: pp. 215-226
+    [link](http://homes.cs.washington.edu/~arvind/cs425/doc/mattern89virtual.pdf)
+
+  """
   @type t :: [vc_entry]
   @type binary_vclock :: binary
   @typedoc "The timestamp is present but not used, in case a client wishes to inspect it"
