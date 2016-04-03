@@ -13,8 +13,7 @@ defmodule Crdtex.Vclock do
   @doc "Return true if Va is a direct descendant of Vb, else false -- remember, a vclock is its own descendant!"
   @spec descends(va :: t|[], vb :: t|[]) :: boolean
   def descends(_, []), do: true # all vclocks descend from the empty vclock
-  def descends(va, vb) do
-    [{node_b, ctr_b} |rest_b] = vb
+  def descends(va, [{node_b, ctr_b} |rest_b]) do
     case List.keyfind(va,node_b,0) do
       nil-> false
       {_,ctr_a}-> (ctr_a >= ctr_b) and descends(va,rest_b)
@@ -27,21 +26,15 @@ defmodule Crdtex.Vclock do
   @doc """
   subtract the VClock from the DotList.
   what this means is that any `{actor(), count()}' pair in
-  DotList that is &lt;= an entry in  VClock is removed from DotList
-  Example [{a, 3}, {b, 2}, {d, 14}, {g, 22}] -
-          [{a, 4}, {b, 1}, {c, 1}, {d, 14}, {e, 5}, {f, 2}] =
-          [{{b, 2}, {g, 22}]
+  DotList that is <= an entry in  VClock is removed from DotList
+
+      iex> subtract_dots([{:a,3},{:b,2},{:d,14},{:g,22}],
+      ...>               [{:a,4},{:b,1},{:c,1},{:d,14},{:e,5},{:f,2}])
+      [{:b, 2},{:g, 22}]
   """
   @spec subtract_dots(t, t) :: t
-  def subtract_dots(dot_list, vclock), do: drop_dots(dot_list, vclock, [])
-
-  defp drop_dots([], _clock, new_dots), do: Enum.sort(new_dots)
-  defp drop_dots([{actor, count}=dot | rest], clock, acc) do
-    case get_counter(actor, clock) do
-      cnt when cnt >= count -> drop_dots(rest, clock, acc) # Dot is dominated by clock, drop it
-      _ -> drop_dots(rest, clock, [dot | acc])
-    end
-  end
+  def subtract_dots(dot_list, vclock), do:
+    Enum.reject(dot_list,fn {actor,count}-> get_counter(vclock,actor) >= count end)
 
   @doc "Combine all VClocks in the input list into their least possible common descendant."
   @spec merge(vclocks :: [t]) :: t | []
@@ -57,22 +50,18 @@ defmodule Crdtex.Vclock do
   def merge([], left, acc_clock), do: Enum.reverse(acc_clock, left)
   def merge(left, [], acc_clock), do: Enum.reverse(acc_clock, left)
   def merge(v=[{node1, ctr1}=nct1|vclock],n=[{node2,ctr2}=nct2|nclock], acc_clock) do
-    cond do
-      node1 < node2 -> merge(vclock, n, [nct1|acc_clock])
-      node1 > node2 -> merge(v, nclock, [nct2|acc_clock])
-      true ->
-        ct = cond do
-          ctr1 > ctr2 -> ctr1
-          ctr1 < ctr2 -> ctr2
-          true -> ctr1
-        end
-        merge(vclock, nclock, [{node1,ct}|acc_clock])
+    case {{node1,node2},{ctr1,ctr2}} do
+      {{node1,node2},_} when node1 < node2-> merge(vclock, n, [nct1|acc_clock])
+      {{node1,node2},_} when node1 > node2-> merge(v, nclock, [nct2|acc_clock])
+      {{node1,node1},{ctr1,ctr2}} when ctr1 > ctr2-> merge(vclock, nclock, [{node1,ctr1}|acc_clock])
+      {{node1,node1},{ctr1,ctr2}} when ctr1 < ctr2-> merge(vclock, nclock, [{node1,ctr2}|acc_clock])
+      {{node1,node1},{ctr1,ctr1}} -> merge(vclock, nclock, [{node1,ctr1}|acc_clock])
     end
   end
 
   @doc "Get the counter value in VClock set from Node."
-  @spec get_counter(node :: vclock_node, vclock :: t) :: counter
-  def get_counter(node, vclock) do
+  @spec get_counter(vclock :: t, node :: vclock_node) :: counter
+  def get_counter(vclock, node) do
     case List.keyfind(vclock,node,0) do
       nil -> 0
       {_, ctr} -> ctr
@@ -80,8 +69,8 @@ defmodule Crdtex.Vclock do
   end
 
   @doc "Increment VClock at Node."
-  @spec increment(node :: vclock_node, vclock :: t) :: t
-  def increment(node, vclock) do
+  @spec increment(vclock :: t, node :: vclock_node) :: t
+  def increment(vclock, node) do
     {ctr,newv} = case List.keytake(vclock,node,0) do
       nil-> {1, vclock}
       {{_n,c},modv}-> {c+1,modv}

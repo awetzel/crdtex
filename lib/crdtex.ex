@@ -9,9 +9,9 @@ defmodule Crdtex do
 
   @callback new :: crdt
   @callback value(crdt) :: term
-  @callback value(term, crdt) :: value
-  @callback update(operation, actor, crdt) :: {:ok, crdt} | {:error, error}
-  @callback update(operation, actor, crdt, context) :: {:ok, crdt} | {:error, error}
+  @callback value(crdt, term) :: value
+  @callback update(crdt, actor, operation) :: {:ok, crdt} | {:error, error}
+  @callback update(crdt, context, actor, operation) :: {:ok, crdt} | {:error, error}
 
   @doc """
   When nested in a Map, some CRDTs need the logical clock of the
@@ -19,13 +19,13 @@ defmodule Crdtex do
   the clock and the crdt, and if relevant, returns to crdt with the
   given clock as it's own
   """
-  @callback parent_clock(Crdtex.Vclock.t, crdt) :: crdt
+  @callback parent_clock(crdt, Crdtex.Vclock.t) :: crdt
   @callback merge(crdt, crdt) :: crdt
   @callback equal(crdt, crdt) :: boolean
   @callback to_binary(crdt) :: binary
-  @callback to_binary(target_vers :: pos_integer, crdt) :: {:ok, binary} | {:error, :unsupported_version, vers :: pos_integer}
+  @callback to_binary(crdt, target_vers :: pos_integer) :: {:ok, binary} | {:error, :unsupported_version, vers :: pos_integer}
   @callback from_binary(binary) :: {:ok, crdt} | {:error,:invalid_binary} | {:error, :unsupported_version, vers :: pos_integer}
   @callback stats(crdt) :: [{atom, number}]
-  @callback stat(atom, crdt) :: number | nil
-  @callback to_version(pos_integer, crdt) :: crdt
+  @callback stat(crdt, atom) :: number | nil
+  @callback to_version(crdt, pos_integer) :: crdt
 end
