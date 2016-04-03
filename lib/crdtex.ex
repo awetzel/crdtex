@@ -1,5 +1,5 @@
-defmodule Crdtex do
-  @type crdt :: term
+defprotocol Crdtex do
+  @type crdt :: Crdtex.t
   @type operation :: term
   @type actor :: term
   @type value :: term
@@ -7,11 +7,17 @@ defmodule Crdtex do
   @type dot :: {actor, pos_integer}
   @type context :: Crdtex.Vclock.t | nil
 
-  @callback new :: crdt
-  @callback value(crdt) :: term
-  @callback value(crdt, term) :: value
-  @callback update(crdt, actor, operation) :: {:ok, crdt} | {:error, error}
-  @callback update(crdt, context, actor, operation) :: {:ok, crdt} | {:error, error}
+  @spec value(crdt) :: term
+  def value(crdt)
+
+  @spec value(crdt :: t, term) :: value
+  def value(crdt,term)
+
+  @spec update(crdt, actor, operation) :: {:ok, crdt} | {:error, error}
+  def update(crdt,actor,operation)
+
+  @spec update(crdt, context, actor, operation) :: {:ok, crdt} | {:error, error}
+  def update(crdt, context, actor, operation)
 
   @doc """
   When nested in a Map, some CRDTs need the logical clock of the
@@ -19,13 +25,22 @@ defmodule Crdtex do
   the clock and the crdt, and if relevant, returns to crdt with the
   given clock as it's own
   """
-  @callback parent_clock(crdt, Crdtex.Vclock.t) :: crdt
-  @callback merge(crdt, crdt) :: crdt
-  @callback equal(crdt, crdt) :: boolean
-  @callback to_binary(crdt) :: binary
-  @callback to_binary(crdt, target_vers :: pos_integer) :: {:ok, binary} | {:error, :unsupported_version, vers :: pos_integer}
-  @callback from_binary(binary) :: {:ok, crdt} | {:error,:invalid_binary} | {:error, :unsupported_version, vers :: pos_integer}
-  @callback stats(crdt) :: [{atom, number}]
-  @callback stat(crdt, atom) :: number | nil
-  @callback to_version(crdt, pos_integer) :: crdt
+  @spec parent_clock(crdt, Crdtex.Vclock.t) :: crdt
+  def parent_clock(crdt,vclock)
+
+  @spec merge(crdt, crdt) :: crdt
+  def merge(crdt,crdt)
+
+  @spec equal(crdt, crdt) :: boolean
+  def equal(crdt,crdt)
+
+  @spec stats(crdt) :: [{atom, number}]
+  def stats(crdt)
+
+  @spec stat(crdt, atom) :: number | nil
+  def stat(crdt, atom)
+end
+
+defmodule Crdtex.Behaviour do
+  @callback new :: Crdtex.t
 end
