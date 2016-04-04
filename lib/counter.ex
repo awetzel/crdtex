@@ -43,8 +43,8 @@ defmodule Crdtex.Counter do
     embedded CRDTs most share a causal context with their parent
     Map, setting the internal clock to the parent clock ensures this
     """
-    @spec parent_clock(Vclock.t, C.t) :: C.T
-    def parent_clock(clock, counter), do: %{counter| vclock: clock}
+    @spec parent_clock(C.t,Vclock.t) :: C.T
+    def parent_clock(counter, clock), do: %{counter| vclock: clock}
 
     @doc "the current integer value of the counter"
     @spec value(C.t) :: integer
