@@ -233,7 +233,7 @@ defmodule Crdtex.Map do
     any nested types. hence the common clock.
     """
     @spec update(M.t, Crdtex.context, Crdtex.actor | Crdtex.dot, M.map_op) :: {:ok, M.t} | M.precondition_error
-    def update(%{entries: entries,vclock: clock}=map, ctx \\ nil, actor_or_dot, {:update,ops}) do
+    def update(%{entries: _entries,vclock: clock}=map, ctx \\ nil, actor_or_dot, {:update,ops}) do
       {dot, clock} = update_clock(actor_or_dot, clock)
       apply_ops(%{map|vclock: clock},ctx,dot,ops)
     end
@@ -304,8 +304,8 @@ defmodule Crdtex.Map do
     end
 
     # drop dominated fields
-    defp ctx_rem_field(map,ctx, nil), do: nil
-    defp ctx_rem_field(map,ctx, {crdts, prev_tombstone, type}) do
+    defp ctx_rem_field(_map,_ctx, nil), do: nil
+    defp ctx_rem_field(map,ctx, {crdts, prev_tombstone, _type}) do
       # Drop dominated fields, and update the tombstone.
       #
       # If the context is removing a field at dot {a, 1} and the
@@ -444,7 +444,7 @@ defmodule Crdtex.Map do
     @spec remove_all(M.t,M.context,[M.field]) :: M.t
     defp remove_all(map, ctx, fields) do
       Enum.reduce(fields,map,fn field, acc->
-        {:ok, acc} = remove_field(map, ctx, field)
+        {:ok, acc} = remove_field(acc, ctx, field)
         acc
       end)
     end
