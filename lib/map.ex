@@ -144,7 +144,7 @@ defmodule Crdtex.Map do
   
   See {@link riak_dt_emcntr} for the embedded counter.
   """
-  @behaviour Crdtex
+  @behaviour Crdtex.Behaviour
 
   defstruct vclock: [], entries: %{}, deferred: %{}
   @type t :: %Crdtex.Map{vclock: Vclock.t, entries: entries, deferred: deferred}
