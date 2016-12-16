@@ -174,7 +174,7 @@ defmodule Crdtex.Set do
     
     def remove_all(set,_ctx,_actor,[]), do: {:ok, set}
     def remove_all(set, ctx, actor, [elem | rest]) do
-      {:ok, set} = update(set,ctx,actor,{:remove, Elem})
+      {:ok, set} = update(set,ctx,actor,{:remove, elem})
       remove_all(set,ctx,actor,rest)
     end
     

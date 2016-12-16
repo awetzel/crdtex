@@ -35,13 +35,13 @@ defmodule Crdtex.Reg do
     
     @doc "Assign a `Value' to the `lwwreg()' associating the update with time `TS'"
     @spec update(Reg.t,Crdtex.actor | Crdtex.dot,Reg.lwwreg_op()) :: {:ok, Reg.t}
-    def update(%{ts: old_ts}=reg,_actor,{:assign, val, ts}) when is_integer(ts) and ts > 0 and ts >= old_ts, do:
+    def update(%{ts: old_ts}=_reg,_actor,{:assign, val, ts}) when is_integer(ts) and ts > 0 and ts >= old_ts, do:
       {:ok, %Reg{val: val, ts: ts}}
     def update(old_reg,_actor,{:assign, _val, _ts}), do: {:ok, old_reg}
 
     # For when users don't provide timestamps
     # don't think it is a good idea to mix server and client timestamps
-    def update(%{val: old_val, ts: old_ts}=old_reg,_actor,{:assign, val}) do
+    def update(%{val: _old_val, ts: old_ts}=old_reg,_actor,{:assign, val}) do
       micro_epoch = :erlang.system_time(:micro_seconds)
       lww = if micro_epoch > old_ts, do: %Reg{val: val, ts: micro_epoch}, else: old_reg
       {:ok,lww}
@@ -51,9 +51,9 @@ defmodule Crdtex.Reg do
     
     @doc "Merge two `lwwreg()'s to a single `lwwreg()'. This is the Least Upper Bound function described in the literature."
     @spec merge(Reg.t, Reg.t) :: Reg.t
-    def merge(%{ts: ts1}=reg1,%{ts: ts2}=reg2) when ts1 > ts2, do: reg1
-    def merge(%{ts: ts1}=reg1,%{ts: ts2}=reg2) when ts2 > ts1, do: reg2
-    def merge(%{val: val1}=reg1,%{val: val2}=reg2) when val1 >= val2, do: reg1
+    def merge(%{ts: ts1}=reg1,%{ts: ts2}=_reg2) when ts1 > ts2, do: reg1
+    def merge(%{ts: ts1}=_reg1,%{ts: ts2}=reg2) when ts2 > ts1, do: reg2
+    def merge(%{val: val1}=reg1,%{val: val2}=_reg2) when val1 >= val2, do: reg1
     def merge(_reg1, reg2), do: reg2
     
     @doc """
